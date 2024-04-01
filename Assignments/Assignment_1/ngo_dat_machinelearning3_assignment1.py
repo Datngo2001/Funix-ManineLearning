@@ -20,7 +20,9 @@ from enum import Enum
 import re
 
 REQUIRED_ANSWER = 25
+
 errors = []
+valid_rows = []
 
 class ErrorType(Enum):
     ID_INVALID = 1
@@ -70,6 +72,8 @@ for row in rows:
         errors.append(error)
         
         continue
+    
+    valid_rows.append(row)
         
 print('\n**** REPORT ****\n')
 
@@ -77,4 +81,35 @@ print(f'Total valid lines of data: {len(rows) - len(errors)}')
 
 print(f'Total invalid lines of data: {len(errors)}')
 
+# Task 3: Calculate
+import numpy as np
 
+ANSWER_KEYS = ("B,A,D,D,C,B,D,A,C,C,D,B,A,B,A,C,B,D,A,C,A,A,B,D,D").split(',')
+
+student_scores = []
+
+for row in valid_rows:
+    row_split = str(row).split(',')
+    student_id = row_split[0]
+    student_answers = row_split[1:]
+    student_score = 0
+    
+    for i in range(0, len(student_answers) - 1):
+        if(len(student_answers[i]) == 0):
+            continue
+        elif(student_answers[i] == ANSWER_KEYS[i]):
+            student_score += 4
+        else:
+            student_score += -1
+            
+    student_scores.append([student_id, student_score])
+
+student_scores = np.array(student_scores)
+
+scores = student_scores[:,1].astype(dtype=int)
+
+print(f'Mean (average) score: {scores.mean()}')
+print(f'Highest score: {scores.max()}')
+print(f'Lowest score: {scores.min()}')
+print(f'Range of scores: {scores.max() - scores.min()}')
+print(f'Median score: {np.median(scores)}')
