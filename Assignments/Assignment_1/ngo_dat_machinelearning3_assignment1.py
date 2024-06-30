@@ -2,12 +2,21 @@
 # Task 1: Input file name
 import pandas as pd
 
+NUMBER_OF_COLUMN = 26
 BASE_DATA_FOLDER = f'data-files\\Data_Files'
+
+bad_lines = []    
 
 class_file_name = input("Enter a class file to grade (i.e. class1 for class1.txt): ")
 
 try:        
-    class_df = pd.read_csv(f'{BASE_DATA_FOLDER}\\{class_file_name}.txt', index_col=0, header=None)
+    
+    class_df = pd.read_csv(f'{BASE_DATA_FOLDER}\\{class_file_name}.txt', 
+                           header=None, 
+                           usecols=range(NUMBER_OF_COLUMN),
+                           engine='python',
+                           on_bad_lines= lambda x : bad_lines.append(x) if 1==1 else None )
+    
     print(f'Successfully opened {class_file_name}.txt')
 except IOError:
     print('File cannot be found.')
@@ -27,21 +36,21 @@ class ErrorType(Enum):
     WRONG_ANSWER_AMOUNT = 2
     
 class DataError:
-    def __init__(self, type: ErrorType, message: str, data: str):
+    def __init__(self, type: ErrorType, message: str, data: pd.Series):
         self.type = type
         self.message = message
         self.data = data
     
     def print(self):
         print(self.message)
-        print(self.data + '\n')
+        print(','.join(self.data.astype(str).values).replace('nan', ''))
         
 
 print('\n**** ANALYZING ****\n')
 
 for index, row in class_df.iterrows():
     
-    if(len(row) != REQUIRED_ANSWER):
+    if(len(row) != REQUIRED_ANSWER + 1):
         error = DataError(
             type = ErrorType.WRONG_ANSWER_AMOUNT,
             message = f'Invalid line of data: does not contain exactly {REQUIRED_ANSWER + 1} values:',
@@ -51,7 +60,7 @@ for index, row in class_df.iterrows():
         errors.append(error)
         continue
     
-    student_id = index
+    student_id = row.iloc[0]
     
     if(not re.match(r'^N\d{8}$', student_id)):
         error = DataError(
@@ -79,8 +88,8 @@ ANSWER_KEYS = pd.Series(("B,A,D,D,C,B,D,A,C,C,D,B,A,B,A,C,B,D,A,C,A,A,B,D,D").sp
 student_scores = []
 
 for index, row in valid_df.iterrows():
-    student_id = index
-    student_answers = row
+    student_id = row[0]
+    student_answers = row[1:]
     student_score = 0
     
     for i, answer in student_answers.items():
@@ -96,7 +105,7 @@ for index, row in valid_df.iterrows():
 
 student_scores = np.array(student_scores)
 
-scores = student_scores[:,1].astype(dtype=int)
+scores = student_scores[:,1].astype(dtype=int) if len(student_scores)>0 else np.array([])
 
 print(f'Mean (average) score: {scores.mean()}')
 print(f'Highest score: {scores.max()}')
